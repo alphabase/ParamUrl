@@ -1,26 +1,35 @@
+// This array will contain tabs that have positives, identified by tab.id
+var positiveTabs = [];
+
 // This listener is called when the user clicks on the browser action button
 chrome.browserAction.onClicked.addListener(function(tab) {
-	// First we split the URL by means of the question mark sign
-	var urlparts = tab.url.split("?");
-	// If we have at least two parts, this means we have found a "question mark" (?) sign and thus there might be a query string
-	if (typeof urlparts[1] != 'undefined') {
-		// We split the query string by the "ampersand" (&) sign, separating different parameter parts
-		var vars = urlparts[1].split("&");
-		// We take care of every query string part
-		for (var i = 0; i < vars.length; i++) {
-			// Separate the id from the value by splitting by "equals" (=) sign
-			var pair = vars[i].split("=");
-			// Call the function to set the input value
-			setInputValue(pair[0], pair[1]);
+	// Check if we know an array of positives for this tab.id
+	if (typeof positiveTabs[tab.id] !== "undefined") {
+		// Run each positive
+		for (var i = 0; i < positiveTabs[tab.id].length; i++) {
+			var positive = positiveTabs[tab.id][i];
+			// This chrome function allows us to execute JavaScript in the target chrome tab
+			chrome.tabs.executeScript({
+				code: 'document.getElementById("'+positive.id+'").value = "'+positive.value+'";'
+			});
 		}
 	}
 });
 
-// This functions sets the input field with a given value
-// The input field is indicated by its id attribute
-function setInputValue(id, value) {
-	// This chrome function allows us to execute JavaScript in the target chrome tab
-	chrome.tabs.executeScript({
-		code: 'document.getElementById("'+id+'").value = "'+decodeURIComponent(value)+'";'
-	});
-}
+// This listener is called when the content script has loaded
+// It should receive an array of positives when detected
+chrome.runtime.onMessage.addListener(
+	function(request, sender, sendResponse) {
+		// If we have detected positives, we save it to the positiveTabs array and we update the badgeText for this tab.id
+		if (request.positives.length > 0) {
+			positiveTabs[sender.tab.id] = request.positives;
+			chrome.browserAction.setBadgeText({
+				text: String(request.positives.length),
+				tabId: sender.tab.id
+			});
+		// If we have detected no positives, we disable the browserAction for this tab.id
+		} else {
+			chrome.browserAction.disable(sender.tab.id);
+		}
+	}
+);

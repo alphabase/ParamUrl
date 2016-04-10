@@ -6,7 +6,8 @@
 	"version": "1.0",
 
 	"permissions": [
-		"activeTab"
+		"activeTab",
+		"tabs"
 	],
 	"background": {
 		"scripts": ["background.js"],
@@ -18,5 +19,9 @@
 			"19": "images/icon19.png",
 			"38": "images/icon38.png"
 		}
-	}
+	},
+	"content_scripts": [{
+		"matches": ["http://*/*", "https://*/*"],
+		"js": ["content_script.js"]
+	}]
 }
