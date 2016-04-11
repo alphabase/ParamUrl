@@ -10,7 +10,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
 			var positive = positiveTabs[tab.id][i];
 			// This chrome function allows us to execute JavaScript in the target chrome tab
 			chrome.tabs.executeScript({
-				code: 'document.getElementById("'+positive.id+'").value = "'+positive.value+'";'
+				code: 'var element = document.getElementById("'+positive.id+'"); element.value = "'+positive.value+'"; if ("createEvent" in document) { var evt = document.createEvent("HTMLEvents"); evt.initEvent("change", false, true); element.dispatchEvent(evt); } else { element.fireEvent("onchange"); }'
 			});
 		}
 	}
